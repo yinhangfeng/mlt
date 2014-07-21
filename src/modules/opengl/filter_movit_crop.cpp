@@ -59,6 +59,9 @@ static int get_image( mlt_frame frame, uint8_t **image, mlt_image_format *format
 	// an image after it had already been converted to glsl.
 	*format = mlt_image_none;
 
+	// Ask for the input range to not be scaled down to MPEG ranges.
+	mlt_properties_set( properties, "consumer_color_range", "jpeg" );
+
 	error = mlt_frame_get_image( frame, image, format, width, height, writable );
 
 	// Skip processing if requested.

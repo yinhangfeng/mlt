@@ -1189,7 +1189,7 @@ static int pick_av_pixel_format( int *pix_fmt )
 
 // returns resulting YUV colorspace
 static int convert_image( producer_avformat self, AVFrame *frame, uint8_t *buffer, int pix_fmt,
-	mlt_image_format *format, int width, int height, uint8_t **alpha )
+	mlt_image_format *format, int width, int height, uint8_t **alpha, int dst_full_range )
 {
 	int flags = SWS_BICUBIC | SWS_ACCURATE_RND;
 	mlt_profile profile = mlt_service_profile( MLT_PRODUCER_SERVICE( self->parent ) );
@@ -1202,9 +1202,9 @@ static int convert_image( producer_avformat self, AVFrame *frame, uint8_t *buffe
 	flags |= SWS_CPU_CAPS_MMX2;
 #endif
 
-	mlt_log_debug( MLT_PRODUCER_SERVICE(self->parent), "%s @ %dx%d space %d->%d\n",
+	mlt_log_info( MLT_PRODUCER_SERVICE(self->parent), "%s @ %dx%d space %d->%d src_full_range %d dst_full_range %d\n",
 		mlt_image_format_name( *format ),
-		width, height, self->yuv_colorspace, profile->colorspace );
+		width, height, self->yuv_colorspace, profile->colorspace, self->full_luma, dst_full_range );
 
 	// extract alpha from planar formats
 	if ( ( pix_fmt == PIX_FMT_YUVA420P
@@ -1229,9 +1229,6 @@ static int convert_image( producer_avformat self, AVFrame *frame, uint8_t *buffe
 	pick_av_pixel_format( &src_pix_fmt );
 	if ( *format == mlt_image_yuv420p )
 	{
-		// This is a special case. Movit wants the full range, if available.
-		// Thankfully, there is not much other use of yuv420p except consumer
-		// avformat with no filters and explicitly requested.
 #if defined(FFUDIV) && (LIBAVFORMAT_VERSION_INT >= ((55<<16)+(48<<8)+100))
 		struct SwsContext *context = sws_getContext(width, height, src_pix_fmt,
 			width, height, PIX_FMT_YUV420P, flags, NULL, NULL, NULL);
@@ -1248,7 +1245,7 @@ static int convert_image( producer_avformat self, AVFrame *frame, uint8_t *buffe
 		output.linesize[0] = width;
 		output.linesize[1] = width >> 1;
 		output.linesize[2] = width >> 1;
-		if ( !set_luma_transfer( context, self->yuv_colorspace, profile->colorspace, self->full_luma, self->full_luma ) )
+		if ( !set_luma_transfer( context, self->yuv_colorspace, profile->colorspace, self->full_luma, dst_full_range ) )
 			result = profile->colorspace;
 		sws_scale( context, (const uint8_t* const*) frame->data, frame->linesize, 0, height,
 			output.data, output.linesize);
@@ -1280,16 +1277,18 @@ static int convert_image( producer_avformat self, AVFrame *frame, uint8_t *buffe
 	}
 	else
 	{
+		AVPicture output;
 #if defined(FFUDIV) && (LIBAVFORMAT_VERSION_INT >= ((55<<16)+(48<<8)+100))
 		struct SwsContext *context = sws_getContext( width, height, src_pix_fmt,
-			width, height, PIX_FMT_YUYV422, flags | SWS_FULL_CHR_H_INP, NULL, NULL, NULL);
+			width, height, PIX_FMT_YUYV422, flags | SWS_FULL_CHR_H_INP, NULL, NULL, NULL );
+		avpicture_fill( &output, buffer, PIX_FMT_YUYV422, width, height );
 #else
 		struct SwsContext *context = sws_getContext( width, height, pix_fmt,
-			width, height, PIX_FMT_YUYV422, flags | SWS_FULL_CHR_H_INP, NULL, NULL, NULL);
+			width, height, dst_full_range ? PIX_FMT_YUVJ422P : PIX_FMT_YUYV422,
+			flags | SWS_FULL_CHR_H_INP, NULL, NULL, NULL );
+		avpicture_fill( &output, buffer, dst_full_range ? PIX_FMT_YUVJ422P : PIX_FMT_YUYV422, width, height );
 #endif
-		AVPicture output;
-		avpicture_fill( &output, buffer, PIX_FMT_YUYV422, width, height );
-		if ( !set_luma_transfer( context, self->yuv_colorspace, profile->colorspace, self->full_luma, 0 ) )
+		if ( !set_luma_transfer( context, self->yuv_colorspace, profile->colorspace, self->full_luma, dst_full_range ) )
 			result = profile->colorspace;
 		sws_scale( context, (const uint8_t* const*) frame->data, frame->linesize, 0, height,
 			output.data, output.linesize);
@@ -1297,6 +1296,35 @@ static int convert_image( producer_avformat self, AVFrame *frame, uint8_t *buffe
 	}
 	return result;
 }
+
+#if !defined(FFUDIV) || (LIBAVFORMAT_VERSION_INT < ((55<<16)+(48<<8)+100))
+static int convert_yuv422p_to_yuv422( uint8_t *yuv422p, uint8_t *yuv422, int width, int height )
+{
+	int ret = 0;
+	int i, j;
+	int half = width >> 1;
+	uint8_t *Y = yuv422p;
+	uint8_t *U = Y + width * height;
+	uint8_t *V = U + width * height / 2;
+	uint8_t *d = yuv422;
+
+	for ( i = 0; i < height; i++ )
+	{
+		uint8_t *u = U + i * ( half );
+		uint8_t *v = V + i * ( half );
+
+		j = half + 1;
+		while ( --j )
+		{
+			*d ++ = *Y ++;
+			*d ++ = *u ++;
+			*d ++ = *Y ++;
+			*d ++ = *v ++;
+		}
+	}
+	return ret;
+}
+#endif
 
 /** Allocate the image buffer and set it on the frame.
 */
@@ -1343,6 +1371,11 @@ static int producer_get_image( mlt_frame frame, uint8_t **buffer, mlt_image_form
 	uint8_t *alpha = NULL;
 	int got_picture = 0;
 	int image_size = 0;
+	int dst_full_range = ( mlt_properties_get_int( frame_properties, "consumer_color_range" ) == AVCOL_RANGE_JPEG )
+		 || ( mlt_properties_get( frame_properties, "consumer_color_range" )
+			  &&  ( !strcmp( "jpeg", mlt_properties_get( frame_properties, "consumer_color_range" ) )
+				 || !strcmp( "JPEG", mlt_properties_get( frame_properties, "consumer_color_range" ) )
+			 ) );
 
 	// Fetch the video format context
 	AVFormatContext *context = self->video_format;
@@ -1452,6 +1485,8 @@ static int producer_get_image( mlt_frame frame, uint8_t **buffer, mlt_image_form
 			*format = mlt_image_rgb24;
 	}
 #endif
+	if ( *format == mlt_image_rgb24 || *format == mlt_image_rgb24a || *format == mlt_image_opengl )
+		dst_full_range = 0;
 
 	// Duplicate the last image if necessary
 	if ( self->video_frame && self->video_frame->linesize[0]
@@ -1475,12 +1510,24 @@ static int producer_get_image( mlt_frame frame, uint8_t **buffer, mlt_image_form
 				picture.linesize[1] = codec_context->width / 2;
 				picture.linesize[2] = codec_context->width / 2;
 				yuv_colorspace = convert_image( self, (AVFrame*) &picture, *buffer,
-					PIX_FMT_YUV420P, format, *width, *height, &alpha );
+					PIX_FMT_YUV420P, format, *width, *height, &alpha, dst_full_range );
 			}
 			else
 #endif
 			yuv_colorspace = convert_image( self, self->video_frame, *buffer, codec_context->pix_fmt,
-				format, *width, *height, &alpha );
+				format, *width, *height, &alpha, dst_full_range );
+
+#if !defined(FFUDIV) || (LIBAVFORMAT_VERSION_INT < ((55<<16)+(48<<8)+100))
+			// Convert yuv422p to yuv422 if needed.
+			if ( dst_full_range && *format == mlt_image_yuv422 )
+			{
+				int size = mlt_image_format_size( *format, *width, *height, NULL );
+				uint8_t* new_buffer = mlt_pool_alloc( size );
+				convert_yuv422p_to_yuv422( *buffer, new_buffer, *width, *height );
+				mlt_frame_set_image( frame, new_buffer, size, mlt_pool_release );
+				*buffer = new_buffer;
+			}
+#endif
 			mlt_properties_set_int( frame_properties, "colorspace", yuv_colorspace );
 			got_picture = 1;
 		}
@@ -1522,7 +1569,7 @@ static int producer_get_image( mlt_frame frame, uint8_t **buffer, mlt_image_form
 				}
 				else if ( ret < 0 )
 				{
-					mlt_log_verbose( MLT_PRODUCER_SERVICE(producer), "av_read_frame returned error %d inside get_image\n", ret );
+					mlt_log_debug( MLT_PRODUCER_SERVICE(producer), "av_read_frame returned error %d inside get_image\n", ret );
 					if ( !self->seekable && mlt_properties_get_int( properties, "reconnect" ) )
 					{
 						// Try to reconnect to live sources by closing context and codecs,
@@ -1669,7 +1716,7 @@ static int producer_get_image( mlt_frame frame, uint8_t **buffer, mlt_image_form
 							if ( status == VDP_STATUS_OK )
 							{
 								yuv_colorspace = convert_image( self, self->video_frame, *buffer, PIX_FMT_YUV420P,
-									format, *width, *height, &alpha );
+									format, *width, *height, &alpha, dst_full_range );
 								mlt_properties_set_int( frame_properties, "colorspace", yuv_colorspace );
 							}
 							else
@@ -1688,7 +1735,19 @@ static int producer_get_image( mlt_frame frame, uint8_t **buffer, mlt_image_form
 					else
 #endif
 					yuv_colorspace = convert_image( self, self->video_frame, *buffer, codec_context->pix_fmt,
-						format, *width, *height, &alpha );
+						format, *width, *height, &alpha, dst_full_range );
+
+#if !defined(FFUDIV) || (LIBAVFORMAT_VERSION_INT < ((55<<16)+(48<<8)+100))
+					// Convert yuv422p to yuv422 if needed.
+					if ( dst_full_range && *format == mlt_image_yuv42 )
+					{
+						int size = mlt_image_format_size( *format, *width, *height, NULL );
+						uint8_t* new_buffer = mlt_pool_alloc( size );
+						convert_yuv422p_to_yuv422( *buffer, new_buffer, *width, *height );
+						mlt_frame_set_image( frame, new_buffer, size, mlt_pool_release );
+						*buffer = new_buffer;
+					}
+#endif
 					mlt_properties_set_int( frame_properties, "colorspace", yuv_colorspace );
 					self->top_field_first |= self->video_frame->top_field_first;
 					self->current_position = int_position;
@@ -1775,6 +1834,8 @@ exit_get_image:
 	mlt_properties_set_int( properties, "meta.media.top_field_first", self->top_field_first );
 	mlt_properties_set_int( properties, "meta.media.progressive", mlt_properties_get_int( frame_properties, "progressive" ) );
 	mlt_service_unlock( MLT_PRODUCER_SERVICE( producer ) );
+
+	mlt_properties_set_int( frame_properties, "full_luma", dst_full_range );
 
 	return !got_picture;
 }

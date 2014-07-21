@@ -69,13 +69,15 @@ static int convert_mlt_to_av_cs( mlt_image_format format )
 	return value;
 }
 
-static int set_luma_transfer( struct SwsContext *context, int src_colorspace, int dst_colorspace, int full_range )
+static int set_luma_transfer( struct SwsContext *context, int src_colorspace, int dst_colorspace, int src_full_range, int dst_full_range )
 {
 	const int *src_coefficients = sws_getCoefficients( SWS_CS_DEFAULT );
 	const int *dst_coefficients = sws_getCoefficients( SWS_CS_DEFAULT );
 	int brightness = 0;
 	int contrast = 1 << 16;
 	int saturation = 1  << 16;
+	int src_range = src_full_range ? 1 : 0;
+	int dst_range = dst_full_range ? 1 : 0;
 
 	switch ( src_colorspace )
 	{
@@ -111,13 +113,13 @@ static int set_luma_transfer( struct SwsContext *context, int src_colorspace, in
 	default:
 		break;
 	}
-	return sws_setColorspaceDetails( context, src_coefficients, full_range, dst_coefficients, full_range,
+	return sws_setColorspaceDetails( context, src_coefficients, src_range, dst_coefficients, dst_range,
 		brightness, contrast, saturation );
 }
 
 // returns set_lumage_transfer result
 static int av_convert_image( uint8_t *out, uint8_t *in, int out_fmt, int in_fmt,
-	int width, int height, int src_colorspace, int dst_colorspace, int use_full_range )
+	int width, int height, int src_colorspace, int dst_colorspace, int src_full_range, int dst_full_range )
 {
 	AVPicture input;
 	AVPicture output;
@@ -144,7 +146,7 @@ static int av_convert_image( uint8_t *out, uint8_t *in, int out_fmt, int in_fmt,
 		// libswscale wants the RGB colorspace to be SWS_CS_DEFAULT, which is = SWS_CS_ITU601.
 		if ( out_fmt == PIX_FMT_RGB24 || out_fmt == PIX_FMT_RGBA )
 			dst_colorspace = 601;
-		error = set_luma_transfer( context, src_colorspace, dst_colorspace, use_full_range );
+		error = set_luma_transfer( context, src_colorspace, dst_colorspace, src_full_range, dst_full_range );
 		sws_scale( context, (const uint8_t* const*) input.data, input.linesize, 0, height,
 			output.data, output.linesize);
 		sws_freeContext( context );
@@ -168,11 +170,18 @@ static int convert_image( mlt_frame frame, uint8_t **image, mlt_image_format *fo
 			MLT_PRODUCER_SERVICE( mlt_frame_get_original_producer( frame ) ) );
 		int profile_colorspace = profile ? profile->colorspace : 601;
 		int colorspace = mlt_properties_get_int( properties, "colorspace" );
-		int force_full_luma = 0;
+		int src_full_range = ( *format == mlt_image_yuv420p || *format == mlt_image_yuv422 )
+				&& mlt_properties_get_int( properties, "full_luma" );
+		int dst_full_range = ( output_format == mlt_image_yuv420p || output_format == mlt_image_yuv422 )
+				&& ( mlt_properties_get_int( properties, "consumer_color_range" ) == AVCOL_RANGE_JPEG
+					 || ( mlt_properties_get( properties, "consumer_color_range" )
+						  &&  ( !strcmp( "jpeg", mlt_properties_get( properties, "consumer_color_range" ) )
+							 || !strcmp( "JPEG", mlt_properties_get( properties, "consumer_color_range" ) )
+				   ) ) );
 		
-		mlt_log_debug( NULL, "[filter avcolor_space] %s -> %s @ %dx%d space %d->%d\n",
+		mlt_log_info( NULL, "[filter avcolor_space] %s -> %s @ %dx%d space %d->%d src_full_range %d dst_full_range %d\n",
 			mlt_image_format_name( *format ), mlt_image_format_name( output_format ),
-			width, height, colorspace, profile_colorspace );
+			width, height, colorspace, profile_colorspace, src_full_range, dst_full_range );
 
 		int in_fmt = convert_mlt_to_av_cs( *format );
 		int out_fmt = convert_mlt_to_av_cs( output_format );
@@ -211,11 +220,12 @@ static int convert_image( mlt_frame frame, uint8_t **image, mlt_image_format *fo
 
 		// Update the output
 		if ( !av_convert_image( output, *image, out_fmt, in_fmt, width, height,
-								colorspace, profile_colorspace, force_full_luma ) )
+				colorspace, profile_colorspace, src_full_range, dst_full_range ) )
 		{
 			// The new colorspace is only valid if destination is YUV.
 			if ( output_format == mlt_image_yuv422 || output_format == mlt_image_yuv420p )
 				mlt_properties_set_int( properties, "colorspace", profile_colorspace );
+			mlt_properties_set_int( properties, "full_luma", dst_full_range );
 		}
 		*image = output;
 		*format = output_format;
