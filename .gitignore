@@ -55,3 +55,5 @@ Mlt7Config*.cmake
 install_manifest.txt
 out/
 src/modules/qt/mltqt_autogen/
+
+.idea

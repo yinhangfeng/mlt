@@ -158,6 +158,10 @@ mlt_repository mlt_factory_init( const char *directory )
 
 		// Store the prefix for later retrieval
 #if defined(_WIN32) || (defined(__APPLE__) && defined(RELOCATABLE))
+        // TODO/
+        if ( directory == NULL || !strcmp( directory, "" ) )
+            directory = getenv( "MLT_REPOSITORY" );
+
 		if ( directory ) {
 			mlt_directory = strdup( directory );
 		} else {
