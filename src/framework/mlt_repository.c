@@ -34,6 +34,10 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
+#if defined(__EMSCRIPTEN__)
+#include "mlt_factory_register.h";
+#endif
+
 /** \brief Repository class
  *
  * The Repository is a collection of plugin modules and their services and service metadata.
@@ -74,6 +78,11 @@ mlt_repository mlt_repository_init( const char *directory )
 	self->producers = mlt_properties_new();
 	self->transitions = mlt_properties_new();
 
+#if defined(__EMSCRIPTEN__)
+  // emsdk 编译时暂时使用静态编译，之后再考虑如何使用 dlopen
+	mlt_core_register(self);
+	// mlt_xml_register(self);
+#else
 	// Get the directory list
 	mlt_properties dir = mlt_properties_new();
 	int count = mlt_properties_dir_list( dir, directory, NULL, 0 );
@@ -135,6 +144,7 @@ mlt_repository mlt_repository_init( const char *directory )
 		mlt_log_error( NULL, "%s: no plugins found in \"%s\"\n", __FUNCTION__, directory );
 
 	mlt_properties_close( dir );
+#endif
 
 	return self;
 }

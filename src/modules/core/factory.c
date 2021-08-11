@@ -18,6 +18,7 @@
  */
 
 #include <framework/mlt.h>
+#include <framework/mlt_factory_register.h>
 #include <string.h>
 #include <limits.h>
 
@@ -152,4 +153,8 @@ MLT_REPOSITORY
 	MLT_REGISTER_METADATA( mlt_service_transition_type, "luma", metadata, "transition_luma.yml" );
 	MLT_REGISTER_METADATA( mlt_service_transition_type, "mix", metadata, "transition_mix.yml" );
 	MLT_REGISTER_METADATA( mlt_service_transition_type, "matte", metadata, "transition_matte.yml" );
+}
+
+void mlt_core_register( mlt_repository repository ) {
+	mlt_register(repository);
 }

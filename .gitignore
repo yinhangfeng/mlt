@@ -57,3 +57,5 @@ out/
 src/modules/qt/mltqt_autogen/
 
 .idea
+.vscode
+/wasm-out

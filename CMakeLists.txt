@@ -35,7 +35,7 @@ option(MOD_SOX "Enable SoX module" OFF)
 option(MOD_VIDSTAB "Enable vid.stab module (GPL)" OFF)
 option(MOD_VORBIS "Enable Vorbis module" OFF)
 option(MOD_XINE "Enable XINE module (GPL)" OFF)
-option(MOD_XML "Enable XML module" OFF)
+option(MOD_XML "Enable XML module" ON)
 
 option(SWIG_CSHARP "Enable SWIG C# bindings" OFF)
 option(SWIG_JAVA "Enable SWIG Java bindings" OFF)
