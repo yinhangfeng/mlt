@@ -9,6 +9,7 @@ project(MLT
 
 set(PROJECT_DIR ${CMAKE_SOURCE_DIR}/..)
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/../src)
+set(BUILD_DIR ${CMAKE_SOURCE_DIR}/../build)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/out/${CMAKE_INSTALL_BINDIR}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/out/lib")
@@ -52,14 +53,32 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(Threads REQUIRED)
 
-# 兼容 emsdk 编译需要定义的宏
-add_compile_definitions(
-  MELT_NOSDL=""
-  # HAVE_LOCALE_H=""
-  __EMSCRIPTEN__=""
-)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+  include_directories(${BUILD_DIR}/include)
+  link_directories(${BUILD_DIR}/lib)
+
+  # 兼容 emsdk 编译需要定义的宏
+  add_compile_definitions(
+    MELT_NOSDL
+    HAVE_LOCALE_H
+  )
+else()
+  add_compile_definitions(
+    # 模拟 __EMSCRIPTEN__ 环境
+    __EMSCRIPTEN__
+  )
+endif()
 
 add_subdirectory(framework)
 add_subdirectory(modules)
-# 可执行文件直接使用 emcc 可以方便控制相关参数
+# 可执行文件模块直接使用 emcc 编译可以方便控制相关参数
 add_subdirectory(melt)
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+  # https://emscripten.org/docs/getting_started/FAQ.html?highlight=cmake#how-do-i-specify-s-options-in-a-cmake-project
+  # -sPROXY_TO_PTHREAD=1
+  target_link_options(melt PRIVATE -sMODULARIZE=1 -sEXPORT_NAME=Melt -sEXPORTED_RUNTIME_METHODS=[FS,cwrap,ccall] -sPTHREAD_POOL_SIZE=navigator.hardwareConcurrency)
+  # -gsource-map 不能放在 target_link_options 中
+  # https://emscripten.org/docs/porting/Debugging.html#debug-information
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+endif()

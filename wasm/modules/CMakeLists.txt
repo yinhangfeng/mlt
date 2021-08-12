@@ -93,5 +93,5 @@ add_subdirectory(core)
 # endif()
 
 # if(MOD_XML)
-# add_subdirectory(xml)
+add_subdirectory(xml)
 # endif()
