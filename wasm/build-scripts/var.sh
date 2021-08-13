@@ -22,7 +22,7 @@ BUILD_DIR=$ROOT_DIR/build
 EM_PKG_CONFIG_PATH=$BUILD_DIR/lib/pkgconfig
 
 # Toolchain file path for cmake
-# TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
+TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
 
 # Flags for code optimization, focus on speed instead
 # of size
@@ -34,11 +34,10 @@ EM_PKG_CONFIG_PATH=$BUILD_DIR/lib/pkgconfig
 # fi
 
 # Unset OPTIM_FLAGS can speed up build
-# OPTIM_FLAGS=""
+OPTIM_FLAGS=""
 
-# CFLAGS_BASE="$OPTIM_FLAGS -I$BUILD_DIR/include"
-CFLAGS_BASE="-I$BUILD_DIR/include"
-CFLAGS="$CFLAGS_BASE"
+CFLAGS_BASE="$OPTIM_FLAGS -I$BUILD_DIR/include"
+CFLAGS="$CFLAGS_BASE  -s USE_PTHREADS=1"
 
 # if [[ "$DISABLE_PTHREAD" == "yes" ]]; then
 #   CFLAGS="$CFLAGS_BASE"
@@ -48,7 +47,7 @@ CFLAGS="$CFLAGS_BASE"
 export CFLAGS=$CFLAGS
 export CXXFLAGS=$CFLAGS
 export LDFLAGS="$CFLAGS -L$BUILD_DIR/lib"
-# export STRIP="llvm-strip"
+export STRIP="llvm-strip"
 export EM_PKG_CONFIG_PATH=$EM_PKG_CONFIG_PATH
 
 echo "EMSDK=$EMSDK"

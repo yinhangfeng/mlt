@@ -20,6 +20,7 @@
 #define GPS_PARSER_H
 
 #include <framework/mlt.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>

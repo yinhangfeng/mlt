@@ -34,7 +34,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
-#if defined(__EMSCRIPTEN__)
+#if defined(STATIC_LINK_PLUGINS)
 #include "mlt_factory_register.h"
 #endif
 
@@ -78,10 +78,13 @@ mlt_repository mlt_repository_init( const char *directory )
 	self->producers = mlt_properties_new();
 	self->transitions = mlt_properties_new();
 
-#if defined(__EMSCRIPTEN__)
-  // emsdk 编译时暂时使用静态编译，之后再考虑如何使用 dlopen
+#if defined(STATIC_LINK_PLUGINS)
+    // emsdk 编译时暂时使用静态编译，之后再考虑如何使用 dlopen
 	mlt_core_register(self);
+#if defined(MOD_XML_ENABLED)
 	mlt_xml_register(self);
+#endif
+
 #else
 	// Get the directory list
 	mlt_properties dir = mlt_properties_new();

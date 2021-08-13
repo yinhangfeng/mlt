@@ -7,6 +7,9 @@ project(MLT
   LANGUAGES C CXX
 )
 
+option(MOD_AVFORMAT "Enable avformat module" ON)
+option(MOD_XML "Enable XML module" OFF)
+
 set(PROJECT_DIR ${CMAKE_SOURCE_DIR}/..)
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/../src)
 set(BUILD_DIR ${CMAKE_SOURCE_DIR}/../build)
@@ -78,6 +81,11 @@ elseif(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
   list(APPEND MLT_COMPILE_OPTIONS "$<$<CONFIG:Release>:-ffast-math>")
 endif()
 
+add_compile_definitions(
+  # 静态依赖插件，不使用 dlopen
+  STATIC_LINK_PLUGINS
+)
+
 if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   include_directories(${BUILD_DIR}/include)
   link_directories(${BUILD_DIR}/lib)
@@ -88,15 +96,26 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
     MELT_NOSDL
     HAVE_LOCALE_H
   )
-else()
-  add_compile_definitions(
-    # 模拟 __EMSCRIPTEN__ 环境
-    __EMSCRIPTEN__
-  )
+
+  # -gsource-map -pthread 不能放在 target_link_options 中
+  # https://emscripten.org/docs/porting/Debugging.html#debug-information
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 endif()
 
 find_package(Threads REQUIRED)
 find_package(PkgConfig REQUIRED)
+
+if(MOD_AVFORMAT)
+  add_compile_definitions(
+    MOD_AVFORMAT_ENABLED
+  )
+endif()
+
+if(MOD_XML)
+  add_compile_definitions(
+    MOD_XML_ENABLED
+  )
+endif()
 
 add_subdirectory(framework)
 add_subdirectory(modules)
@@ -105,9 +124,5 @@ add_subdirectory(melt)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   # https://emscripten.org/docs/getting_started/FAQ.html?highlight=cmake#how-do-i-specify-s-options-in-a-cmake-project
   # -sPROXY_TO_PTHREAD=1
-  target_link_options(melt PRIVATE -sMODULARIZE=1 -sEXPORT_NAME=Melt -sEXPORTED_RUNTIME_METHODS=[FS,cwrap,ccall] -sPTHREAD_POOL_SIZE=navigator.hardwareConcurrency)
-  # -gsource-map -pthread 不能放在 target_link_options 中
-  # https://emscripten.org/docs/porting/Debugging.html#debug-information
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
-  add_compile_options(-Wimplicit-function-declaration)
+  target_link_options(melt PRIVATE -sMODULARIZE=1 -sEXPORT_NAME=Melt -sEXPORTED_RUNTIME_METHODS=[FS,cwrap,ccall] -sPTHREAD_POOL_SIZE=navigator.hardwareConcurrency -sLLD_REPORT_UNDEFINED)
 endif()
