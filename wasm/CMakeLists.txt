@@ -8,7 +8,7 @@ project(MLT
 )
 
 option(MOD_AVFORMAT "Enable avformat module" ON)
-option(MOD_XML "Enable XML module" OFF)
+option(MOD_XML "Enable XML module" ON)
 
 set(PROJECT_DIR ${CMAKE_SOURCE_DIR}/..)
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/../src)
@@ -99,7 +99,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
 
   # -gsource-map -pthread 不能放在 target_link_options 中
   # https://emscripten.org/docs/porting/Debugging.html#debug-information
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+  set(EMSCRIPTEN_CFLAGS "-pthread")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${EMSCRIPTEN_CFLAGS}")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EMSCRIPTEN_CFLAGS}")
 endif()
 
 find_package(Threads REQUIRED)
@@ -123,6 +125,17 @@ add_subdirectory(melt)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   # https://emscripten.org/docs/getting_started/FAQ.html?highlight=cmake#how-do-i-specify-s-options-in-a-cmake-project
-  # -sPROXY_TO_PTHREAD=1
-  target_link_options(melt PRIVATE -sMODULARIZE=1 -sEXPORT_NAME=Melt -sEXPORTED_RUNTIME_METHODS=[FS,cwrap,ccall] -sPTHREAD_POOL_SIZE=navigator.hardwareConcurrency -sLLD_REPORT_UNDEFINED)
+  # https://github.com/emscripten-core/emscripten/blob/main/src/settings.js
+  target_link_options(melt PRIVATE
+    -sMODULARIZE=1
+    -sEXPORT_NAME=createMelt
+    -sINVOKE_RUN=0 # 关闭默认运行 main() 函数
+    # -sEXIT_RUNTIME=1
+    -sEXPORTED_RUNTIME_METHODS=[FS,cwrap,ccall]
+    # -sPROXY_TO_PTHREAD=1 # 在主线程中运行 main 函数
+    -sPTHREAD_POOL_SIZE=4 # 初始线程池大小 navigator.hardwareConcurrency 表示根据机器cpu核心数
+    -sINITIAL_MEMORY=2146435072 # 1024 * 1024 * 2047 = 2146435072 bytes ~= 2 GB
+    # -sALLOW_MEMORY_GROWTH=1 # 允许内存扩大
+    -sLLD_REPORT_UNDEFINED
+  )
 endif()
