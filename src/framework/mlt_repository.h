@@ -45,7 +45,11 @@ typedef void *( *mlt_register_callback )( mlt_profile, mlt_service_type, const c
 typedef mlt_properties ( *mlt_metadata_callback )( mlt_service_type, const char * /* service name */, void * /* callback_data */ );
 
 /** A convenience macro to create an entry point for service registration. */
+#if defined(__EMSCRIPTEN__)
+#define MLT_REPOSITORY static void mlt_register( mlt_repository repository )
+#else
 #define MLT_REPOSITORY void mlt_register( mlt_repository repository )
+#endif
 
 /** A convenience macro to a register service in a more declarative manner. */
 #define MLT_REGISTER( type, service, symbol  ) ( mlt_repository_register( repository, (type), (service), ( mlt_register_callback )(symbol) ) )

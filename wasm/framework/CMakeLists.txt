@@ -73,7 +73,7 @@ add_library(mlt STATIC
 
 target_compile_options(mlt PRIVATE ${MLT_COMPILE_OPTIONS})
 
-target_link_libraries(mlt PRIVATE m Threads::Threads mltcore ${CMAKE_DL_LIBS})
+target_link_libraries(mlt PRIVATE m Threads::Threads mltcore mltxml ${CMAKE_DL_LIBS})
 
 target_include_directories(mlt PUBLIC
   $<BUILD_INTERFACE:${SRC_DIR}>

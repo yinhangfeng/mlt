@@ -19,7 +19,7 @@ ROOT_DIR=$PWD
 BUILD_DIR=$ROOT_DIR/build
 
 # Directory to look for pkgconfig files
-# EM_PKG_CONFIG_PATH=$BUILD_DIR/lib/pkgconfig
+EM_PKG_CONFIG_PATH=$BUILD_DIR/lib/pkgconfig
 
 # Toolchain file path for cmake
 # TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
@@ -49,7 +49,7 @@ export CFLAGS=$CFLAGS
 export CXXFLAGS=$CFLAGS
 export LDFLAGS="$CFLAGS -L$BUILD_DIR/lib"
 # export STRIP="llvm-strip"
-# export EM_PKG_CONFIG_PATH=$EM_PKG_CONFIG_PATH
+export EM_PKG_CONFIG_PATH=$EM_PKG_CONFIG_PATH
 
 echo "EMSDK=$EMSDK"
 echo "DISABLE_PTHREAD=$DISABLE_PTHREAD"

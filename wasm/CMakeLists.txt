@@ -51,11 +51,37 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(Threads REQUIRED)
+list(APPEND MLT_COMPILE_OPTIONS "")
+
+# MSVC cl doesn't support GNU inline assembly (but MSVC-compatible clang-cl does)
+# if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+#   message("xxxxx ${CMAKE_SYSTEM_PROCESSOR}")
+#   if(CMAKE_SYSTEM_PROCESSOR MATCHES "i686|x86|x86_64|AMD64")
+#     set(CPU_MMX ON)
+#     set(CPU_SSE ON)
+#     set(CPU_SSE2 ON)
+#     if(NOT MSVC) # also NOT clang-cl
+#       list(APPEND MLT_COMPILE_OPTIONS "-mmmx;-msse;-msse2")
+#     endif()
+#   endif()
+#   if(CMAKE_SYSTEM_PROCESSOR MATCHES "i686" OR (WIN32 AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86"))
+#     set(CPU_X86_32 ON)
+#   endif()
+#   if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
+#     set(CPU_X86_64 ON)
+#   endif()
+# endif()
+
+if(MSVC)
+  list(APPEND MLT_COMPILE_OPTIONS "$<$<CONFIG:Release>:/fp:fast>")
+elseif(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+  list(APPEND MLT_COMPILE_OPTIONS "$<$<CONFIG:Release>:-ffast-math>")
+endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   include_directories(${BUILD_DIR}/include)
   link_directories(${BUILD_DIR}/lib)
+  set(ENV{PKG_CONFIG_PATH} "${BUILD_DIR}/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
 
   # 兼容 emsdk 编译需要定义的宏
   add_compile_definitions(
@@ -69,16 +95,19 @@ else()
   )
 endif()
 
+find_package(Threads REQUIRED)
+find_package(PkgConfig REQUIRED)
+
 add_subdirectory(framework)
 add_subdirectory(modules)
-# 可执行文件模块直接使用 emcc 编译可以方便控制相关参数
 add_subdirectory(melt)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   # https://emscripten.org/docs/getting_started/FAQ.html?highlight=cmake#how-do-i-specify-s-options-in-a-cmake-project
   # -sPROXY_TO_PTHREAD=1
   target_link_options(melt PRIVATE -sMODULARIZE=1 -sEXPORT_NAME=Melt -sEXPORTED_RUNTIME_METHODS=[FS,cwrap,ccall] -sPTHREAD_POOL_SIZE=navigator.hardwareConcurrency)
-  # -gsource-map 不能放在 target_link_options 中
+  # -gsource-map -pthread 不能放在 target_link_options 中
   # https://emscripten.org/docs/porting/Debugging.html#debug-information
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+  add_compile_options(-Wimplicit-function-declaration)
 endif()

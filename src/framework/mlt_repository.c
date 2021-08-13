@@ -35,7 +35,7 @@
 #include <sys/stat.h>
 
 #if defined(__EMSCRIPTEN__)
-#include "mlt_factory_register.h";
+#include "mlt_factory_register.h"
 #endif
 
 /** \brief Repository class
@@ -81,7 +81,7 @@ mlt_repository mlt_repository_init( const char *directory )
 #if defined(__EMSCRIPTEN__)
   // emsdk 编译时暂时使用静态编译，之后再考虑如何使用 dlopen
 	mlt_core_register(self);
-	// mlt_xml_register(self);
+	mlt_xml_register(self);
 #else
 	// Get the directory list
 	mlt_properties dir = mlt_properties_new();

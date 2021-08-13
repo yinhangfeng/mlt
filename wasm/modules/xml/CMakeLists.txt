@@ -11,13 +11,9 @@ add_library(mltxml STATIC
 
 target_compile_options(mltxml PRIVATE ${MLT_COMPILE_OPTIONS})
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
-  set(LIBXML libxml2)
-else()
-  set(LIBXML PkgConfig::xml)
-endif()
+pkg_check_modules(xml IMPORTED_TARGET libxml-2.0)
 
-target_link_libraries(mltxml PRIVATE mlt m Threads::Threads ${LIBXML})
+target_link_libraries(mltxml PRIVATE mlt m Threads::Threads PkgConfig::xml)
 
 set_target_properties(mltxml PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${MLT_MODULE_OUTPUT_DIRECTORY}")
 

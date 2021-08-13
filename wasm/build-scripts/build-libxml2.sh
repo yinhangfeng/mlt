@@ -51,7 +51,7 @@ CM_FLAGS=(
 echo "CM_FLAGS=${CM_FLAGS[@]}"
 
 cd $LIB_PATH
-rm -rf build/CMakeCache.txt
+rm -f build/CMakeCache.txt
 mkdir -p build
 cd build
 emmake cmake .. -DCMAKE_C_FLAGS="$CXXFLAGS" ${CM_FLAGS[@]}
