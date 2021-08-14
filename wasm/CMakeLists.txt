@@ -87,9 +87,10 @@ add_compile_definitions(
 )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
-  include_directories(${BUILD_DIR}/include)
-  link_directories(${BUILD_DIR}/lib)
-  set(ENV{PKG_CONFIG_PATH} "${BUILD_DIR}/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+  # include_directories(${BUILD_DIR}/include)
+  # TODO PkgConfig 为什么不会自动添加 link_directories?
+  link_directories(${BUILD_DIR}/lib ${PROJECT_DIR}/third_party/ffmpeg/build/lib)
+  set(ENV{PKG_CONFIG_PATH} "${BUILD_DIR}/lib/pkgconfig:${PROJECT_DIR}/third_party/ffmpeg/build/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
 
   # 兼容 emsdk 编译需要定义的宏
   add_compile_definitions(

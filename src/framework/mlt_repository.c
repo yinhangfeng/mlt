@@ -35,7 +35,9 @@
 #include <sys/stat.h>
 
 #if defined(STATIC_LINK_PLUGINS)
-#include "mlt_factory_register.h"
+extern void mlt_core_register( mlt_repository repository );
+extern void mlt_avformat_register( mlt_repository repository );
+extern void mlt_xml_register( mlt_repository repository );
 #endif
 
 /** \brief Repository class
@@ -81,6 +83,9 @@ mlt_repository mlt_repository_init( const char *directory )
 #if defined(STATIC_LINK_PLUGINS)
     // emsdk 编译时暂时使用静态编译，之后再考虑如何使用 dlopen
 	mlt_core_register(self);
+#if defined(MOD_AVFORMAT_ENABLED)
+	mlt_avformat_register(self);
+#endif
 #if defined(MOD_XML_ENABLED)
 	mlt_xml_register(self);
 #endif

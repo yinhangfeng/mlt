@@ -33,7 +33,7 @@ set(MLT_PUPLIC_HEADERS
   ${FRAMEWORK_DIR}/mlt_transition.h
   ${FRAMEWORK_DIR}/mlt_types.h
   ${FRAMEWORK_DIR}/mlt_version.h
-  ${FRAMEWORK_DIR}/mlt_factory_register.h
+  # ${FRAMEWORK_DIR}/mlt_factory_register.h
 )
 
 add_library(mlt STATIC
@@ -73,8 +73,12 @@ add_library(mlt STATIC
 
 target_compile_options(mlt PRIVATE ${MLT_COMPILE_OPTIONS})
 
+if(MOD_AVFORMAT)
+  list(APPEND MLT_PLUGIN_LIBS mltxml)
+endif()
+
 if(MOD_XML)
-  set(MLT_PLUGIN_LIBS mltxml)
+  list(APPEND MLT_PLUGIN_LIBS mltavformat)
 endif()
 
 target_link_libraries(mlt PRIVATE m Threads::Threads mltcore ${MLT_PLUGIN_LIBS} ${CMAKE_DL_LIBS})

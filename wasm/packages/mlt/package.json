@@ -1,0 +1,22 @@
+{
+  "name": "mlt",
+  "version": "0.1.0",
+  "description": "mlt",
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "package.json"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yinhangfeng/mlt.git"
+  },
+  "keywords": [
+    "mlt",
+    "webassembly",
+    "ffmpeg"
+  ],
+  "author": "yinhangfeng@gmail.com",
+  "license": "MIT",
+  "homepage": "https://github.com/yinhangfeng/mlt.git"
+}

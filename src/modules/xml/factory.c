@@ -20,7 +20,6 @@
 #include <string.h>
 #include <limits.h>
 #include <framework/mlt.h>
-#include <framework/mlt_factory_register.h>
 
 extern mlt_consumer consumer_xml_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
 extern mlt_producer producer_xml_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );

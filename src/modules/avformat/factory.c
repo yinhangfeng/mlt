@@ -474,3 +474,7 @@ MLT_REPOSITORY
 	MLT_REGISTER( mlt_service_filter_type, "swresample", create_service );
 #endif
 }
+
+void mlt_avformat_register( mlt_repository repository ) {
+	mlt_register(repository);
+}

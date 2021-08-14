@@ -1,8 +1,8 @@
 add_subdirectory(core)
 
-# if(MOD_AVFORMAT)
-#   add_subdirectory(avformat)
-# endif()
+if(MOD_AVFORMAT)
+  add_subdirectory(avformat)
+endif()
 
 # if(MOD_DECKLINK)
 #   add_subdirectory(decklink)

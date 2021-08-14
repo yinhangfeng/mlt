@@ -14,7 +14,9 @@ run-all() {
   SCRIPTS=(
     # install dependencies
     # install-deps
-    build-libxml2
+    # build-ffmpeg
+    # build-libxml2
+    build-mlt
   )
   run ${SCRIPTS[@]}
 }

@@ -18,7 +18,6 @@
  */
 
 #include <framework/mlt.h>
-#include <framework/mlt_factory_register.h>
 #include <string.h>
 #include <limits.h>
 
