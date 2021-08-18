@@ -36,7 +36,7 @@
 */
 
 static int producer_get_frame( mlt_producer parent, mlt_frame_ptr frame, int track );
-static void mlt_tractor_listener( mlt_multitrack tracks, mlt_tractor self );
+static void mlt_tractor_listener( mlt_multitrack tracks, mlt_tractor self, mlt_event_data event_data );
 
 /** Construct a tractor without a field or multitrack.
  *
@@ -206,7 +206,7 @@ void mlt_tractor_refresh( mlt_tractor self )
 	mlt_properties_set_position( properties, "length", mlt_properties_get_position( multitrack_props, "length" ) );
 }
 
-static void mlt_tractor_listener( mlt_multitrack tracks, mlt_tractor self )
+static void mlt_tractor_listener( mlt_multitrack tracks, mlt_tractor self, mlt_event_data event_data )
 {
 	mlt_tractor_refresh( self );
 }

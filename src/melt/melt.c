@@ -417,7 +417,11 @@ static void event_handling( mlt_producer producer, mlt_consumer consumer )
 static void transport( mlt_producer producer, mlt_consumer consumer )
 {
 	mlt_properties properties = MLT_PRODUCER_PROPERTIES( producer );
+#if defined(__EMSCRIPTEN__)
+	int silent = 1;
+#else
 	int silent = mlt_properties_get_int( MLT_CONSUMER_PROPERTIES( consumer ), "silent" );
+#endif
 	int progress = mlt_properties_get_int( MLT_CONSUMER_PROPERTIES( consumer ), "progress" );
 	int is_getc = mlt_properties_get_int( MLT_CONSUMER_PROPERTIES( consumer ), "melt_getc" );
 	struct timespec tm = { 0, 40000000 };
@@ -445,6 +449,7 @@ static void transport( mlt_producer producer, mlt_consumer consumer )
 
 		while( mlt_properties_get_int( properties, "done" ) == 0 && !mlt_consumer_is_stopped( consumer ) )
 		{
+#if !defined(__EMSCRIPTEN__)
 			int value = ( silent || progress || is_getc )? -1 : term_read( );
 			if ( is_getc )
 			{
@@ -481,7 +486,7 @@ static void transport( mlt_producer producer, mlt_consumer consumer )
 				}
 				fflush( stderr );
 			}
-
+#endif
 			if ( silent || progress )
 				nanosleep( &tm, NULL );
 		}
@@ -731,7 +736,7 @@ static void query_vcodecs( )
 	}
 }
 
-static void on_fatal_error( mlt_properties owner, mlt_consumer consumer )
+static void on_fatal_error( mlt_properties owner, mlt_consumer consumer, mlt_event_data event_data )
 {
 	mlt_properties_set_int( MLT_CONSUMER_PROPERTIES(consumer), "done", 1 );
 	mlt_properties_set_int( MLT_CONSUMER_PROPERTIES(consumer), "melt_error", 1 );
@@ -773,8 +778,12 @@ int main( int argc, char **argv )
 	signal( SIGILL, abnormal_exit_handler );
 	signal( SIGABRT, abnormal_exit_handler );
 
+	// TODO
+	printf("argc:%d\n", argc );
+
 	for ( i = 1; i < argc; i ++ )
 	{
+		printf("argv:%d %s\n", i, argv[ i ] );
 		// Check for serialisation switch
 		if ( !strcmp( argv[ i ], "-serialise" ) )
 		{

@@ -382,7 +382,7 @@ condition_pair;
  * \param pair a condition pair
  */
 
-static void mlt_events_listen_for( mlt_properties self, condition_pair *pair )
+static void mlt_events_listen_for( mlt_properties self, condition_pair *pair, mlt_event_data event_data )
 {
 	pthread_mutex_lock( &pair->mutex );
 	pthread_cond_signal( &pair->cond );

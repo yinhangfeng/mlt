@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>test</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .btns {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 12px;
+    }
+
+    .btns button {
+      margin-right: 12px;
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="btns">
+    <button onclick="test1()">serialise</button>
+    <button onclick="test2()">output xml</button>
+    <button onclick="test3()">output video</button>
+    <button onclick="greyVideo()">grey video</button>
+    <button onclick="palyVideo()">play video</button>
+  </div>
+  <input type="file" id="uploader">
+  <video id="output-video" autoplay controls></video>
+  <!-- <script type="text/javascript" src="../packages/mlt/dist/melt.js"></script> -->
+  <!-- 如果想用 sourcemap 调试，输出文件的位置相对于源码的相对路径不能改变 -->
+  <script type="text/javascript" src="../../out/out/wasm/melt.js"></script>
+  <script type="text/javascript" src="./js/utils.js"></script>
+  <script>
+    async function test1() {
+      const melt = await getMelt();
+      const FS = melt.FS;
+
+      // PROXY_TO_PTHREAD=1 不会影响直接调 main 函数
+      melt.ccall(
+        'main',
+        'number',
+        ['number', 'number'],
+        parseArgs(melt, ['melt', 'color:blue', 'out=100', '-serialise', 'output.melt']),
+      );
+
+      const outputFile = FS.readFile('output.melt', { encoding: 'utf8' });
+
+      console.log('outputFile', outputFile);
+    }
+
+    async function test2() {
+      const melt = await getMelt();
+      const FS = melt.FS;
+
+      melt.ccall(
+        'main',
+        'number',
+        ['number', 'number'],
+        parseArgs(melt, ['melt', 'color:blue', 'out=100', '-consumer', 'xml:output.melt']),
+      );
+
+      const outputFile = FS.readFile('output.melt', { encoding: 'utf8' });
+
+      console.log('outputFile', outputFile);
+    }
+
+    async function test3() {
+      const melt = await getMelt();
+      const FS = melt.FS;
+
+      // PROXY_TO_PTHREAD=1 之后导出的 main 函数
+      melt.ccall(
+        'emscripten_proxy_main',
+        'number',
+        ['number', 'number'],
+        parseArgs(melt, ['melt', 'color:blue', 'out=100', '-consumer', 'avformat:output.mp4']),
+      );
+    }
+
+    async function palyVideo() {
+      const melt = await getMelt();
+      const FS = melt.FS;
+
+      const outputFile = FS.readFile('output.mp4');
+      console.log('outputFile', outputFile);
+      const video = document.getElementById('output-video');
+      video.src = URL.createObjectURL(new Blob([outputFile.buffer], { type: 'video/mp4' }));
+    }
+
+    async function greyVideo() {
+      const files = document.getElementById('uploader').files;
+      if (!files || !files[0]) {
+        return;
+      }
+
+      const inputFileData = new Uint8Array(await readFromBlobOrFile(files[0]));
+
+      const melt = await getMelt();
+      const FS = melt.FS;
+
+      FS.writeFile('input.mp4', inputFileData);
+
+      melt.ccall(
+        'emscripten_proxy_main',
+        'number',
+        ['number', 'number'],
+        parseArgs(melt, ['melt', 'input.mp4', 'out=300', '-filter', 'greyscale', '-consumer', 'avformat:output.mp4']),
+      );
+    }
+  </script>
+</body>
+
+</html>

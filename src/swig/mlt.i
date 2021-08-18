@@ -111,7 +111,7 @@ void mlt_log_set_level( int );
 
 %{
 
-static void ruby_listener( mlt_properties owner, void *object );
+static void ruby_listener( mlt_properties owner, void *object, mlt_event_data event_data );
 
 class RubyListener
 {

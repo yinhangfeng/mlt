@@ -74,11 +74,11 @@ add_library(mlt STATIC
 target_compile_options(mlt PRIVATE ${MLT_COMPILE_OPTIONS})
 
 if(MOD_AVFORMAT)
-  list(APPEND MLT_PLUGIN_LIBS mltxml)
+  list(APPEND MLT_PLUGIN_LIBS mltavformat)
 endif()
 
 if(MOD_XML)
-  list(APPEND MLT_PLUGIN_LIBS mltavformat)
+  list(APPEND MLT_PLUGIN_LIBS mltxml)
 endif()
 
 target_link_libraries(mlt PRIVATE m Threads::Threads mltcore ${MLT_PLUGIN_LIBS} ${CMAKE_DL_LIBS})
@@ -123,8 +123,11 @@ set_target_properties(mlt PROPERTIES
 #   target_compile_definitions(mlt PRIVATE RELOCATABLE)
 # endif()
 
-# TODO
-target_compile_definitions(mlt PRIVATE PREFIX_DATA="${CMAKE_INSTALL_FULL_DATADIR}/mlt" PREFIX_LIB="${CMAKE_INSTALL_FULL_LIBDIR}/mlt")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+  target_compile_definitions(mlt PRIVATE PREFIX_DATA="/mlt_data" PREFIX_LIB="/mlt")
+else()
+  target_compile_definitions(mlt PRIVATE PREFIX_DATA="${CMAKE_INSTALL_FULL_DATADIR}/mlt" PREFIX_LIB="${CMAKE_INSTALL_FULL_LIBDIR}/mlt")
+endif()
 
 # install(TARGETS mlt
 #   EXPORT MltTargets

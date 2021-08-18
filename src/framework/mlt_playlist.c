@@ -234,7 +234,7 @@ static int mlt_playlist_virtual_refresh( mlt_playlist self )
  * \param self a playlist
  */
 
-static void mlt_playlist_listener( mlt_producer producer, mlt_playlist self )
+static void mlt_playlist_listener( mlt_producer producer, mlt_playlist self, mlt_event_data event_data )
 {
 	mlt_playlist_virtual_refresh( self );
 }

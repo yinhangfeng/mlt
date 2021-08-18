@@ -640,7 +640,7 @@ int mlt_service_get_frame( mlt_service self, mlt_frame_ptr frame, int index )
  * \param self the service on which the "service-changed" event is fired
  */
 
-static void mlt_service_filter_changed( mlt_service owner, mlt_service self )
+static void mlt_service_filter_changed( mlt_service owner, mlt_service self, mlt_event_data event_data )
 {
 	mlt_events_fire( MLT_SERVICE_PROPERTIES( self ), "service-changed", mlt_event_data_none() );
 }

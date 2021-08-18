@@ -104,3 +104,46 @@ set_target_properties(mltcore PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${MLT_MODULE_
 #   loader.ini
 #   DESTINATION ${MLT_INSTALL_DATA_DIR}/core
 # )
+
+if(NOT EXISTS "${MLT_DATA_OUTPUT_DIRECTORY}/core")
+  file(COPY
+    ${CORE_DIR}/consumer_multi.yml
+    ${CORE_DIR}/filter_audiomap.yml
+    ${CORE_DIR}/filter_audiowave.yml
+    ${CORE_DIR}/filter_brightness.yml
+    ${CORE_DIR}/filter_channelcopy.yml
+    ${CORE_DIR}/filter_choppy.yml
+    ${CORE_DIR}/filter_crop.yml
+    ${CORE_DIR}/filter_fieldorder.yml
+    ${CORE_DIR}/filter_gamma.yml
+    ${CORE_DIR}/filter_greyscale.yml
+    ${CORE_DIR}/filter_luma.yml
+    ${CORE_DIR}/filter_mask_apply.yml
+    ${CORE_DIR}/filter_mask_start.yml
+    ${CORE_DIR}/filter_mirror.yml
+    ${CORE_DIR}/filter_mono.yml
+    ${CORE_DIR}/filter_obscure.yml
+    ${CORE_DIR}/filter_panner.yml
+    ${CORE_DIR}/filter_rescale.yml
+    ${CORE_DIR}/filter_resize.yml
+    ${CORE_DIR}/filter_transition.yml
+    ${CORE_DIR}/filter_watermark.yml
+    ${CORE_DIR}/link_timeremap.yml
+    ${CORE_DIR}/producer_colour.yml
+    ${CORE_DIR}/producer_consumer.yml
+    ${CORE_DIR}/producer_hold.yml
+    ${CORE_DIR}/producer_loader.yml
+    ${CORE_DIR}/producer_melt_file.yml
+    ${CORE_DIR}/producer_melt.yml
+    ${CORE_DIR}/producer_noise.yml
+    ${CORE_DIR}/producer_timewarp.yml
+    ${CORE_DIR}/producer_tone.yml
+    ${CORE_DIR}/transition_composite.yml
+    ${CORE_DIR}/transition_luma.yml
+    ${CORE_DIR}/transition_matte.yml
+    ${CORE_DIR}/transition_mix.yml
+    ${CORE_DIR}/loader.dict
+    ${CORE_DIR}/loader.ini
+    DESTINATION "${MLT_DATA_OUTPUT_DIRECTORY}/core"
+  )
+endif()

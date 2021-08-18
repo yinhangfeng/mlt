@@ -13,6 +13,10 @@ target_compile_options(mltavformat PRIVATE ${MLT_COMPILE_OPTIONS})
 pkg_check_modules(libavformat IMPORTED_TARGET libavformat)
 pkg_check_modules(libswscale IMPORTED_TARGET libswscale)
 pkg_check_modules(libavutil IMPORTED_TARGET libavutil)
+pkg_check_modules(libavcodec IMPORTED_TARGET libavcodec)
+pkg_check_modules(libavfilter IMPORTED_TARGET libavfilter)
+pkg_check_modules(libavdevice IMPORTED_TARGET libavdevice)
+pkg_check_modules(libswresample IMPORTED_TARGET libswresample)
 
 target_link_libraries(mltavformat PRIVATE
   mlt
@@ -30,27 +34,23 @@ target_compile_definitions(mltavformat PRIVATE FILTERS)
 # endif()
 
 if(TARGET PkgConfig::libavcodec)
-  pkg_check_modules(libavcodec IMPORTED_TARGET libavcodec)
   target_sources(mltavformat PRIVATE ${AVFORMAT_DIR}/producer_avformat.c ${AVFORMAT_DIR}/consumer_avformat.c)
   target_link_libraries(mltavformat PRIVATE PkgConfig::libavcodec)
   target_compile_definitions(mltavformat PRIVATE CODECS)
 endif()
 
 if(TARGET PkgConfig::libavfilter)
-  pkg_check_modules(libavfilter IMPORTED_TARGET libavfilter)
   target_sources(mltavformat PRIVATE ${AVFORMAT_DIR}/filter_avfilter.c)
   target_link_libraries(mltavformat PRIVATE PkgConfig::libavfilter)
   target_compile_definitions(mltavformat PRIVATE AVFILTER)
 endif()
 
 if(TARGET PkgConfig::libavdevice)
-  pkg_check_modules(libavdevice IMPORTED_TARGET libavdevice)
   target_link_libraries(mltavformat PRIVATE PkgConfig::libavdevice)
   target_compile_definitions(mltavformat PRIVATE AVDEVICE)
 endif()
 
 if(TARGET PkgConfig::libswresample)
-  pkg_check_modules(libswresample IMPORTED_TARGET libswresample)
   target_sources(mltavformat PRIVATE ${AVFORMAT_DIR}/filter_swresample.c)
   target_link_libraries(mltavformat PRIVATE PkgConfig::libswresample)
   target_compile_definitions(mltavformat PRIVATE SWRESAMPLE)
@@ -72,3 +72,14 @@ set_target_properties(mltavformat PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${MLT_MOD
 #   yuv_only.txt
 #   DESTINATION ${MLT_INSTALL_DATA_DIR}/avformat
 # )
+
+if(NOT EXISTS "${MLT_DATA_OUTPUT_DIRECTORY}/avformat")
+  file(COPY
+    ${AVFORMAT_DIR}/consumer_avformat.yml
+    ${AVFORMAT_DIR}/producer_avformat.yml
+    ${AVFORMAT_DIR}/resolution_scale.yml
+    ${AVFORMAT_DIR}/blacklist.txt
+    ${AVFORMAT_DIR}/yuv_only.txt
+    DESTINATION "${MLT_DATA_OUTPUT_DIRECTORY}/avformat"
+  )
+endif()

@@ -16,8 +16,5 @@ emmake make
 
 cd ..
 
-rm -rf wasm/packages/dist
-mkdir -p wasm/packages/dist
-mv out/out/melt.js wasm/packages/mlt/dist/melt.js
-mv out/out/melt.wasm wasm/packages/mlt/dist/melt.wasm
-mv out/out/melt.worker.js wasm/packages/mlt/dist/melt.worker.js
+rm -rf wasm/packages/mlt/dist
+cp -r out/out/wasm wasm/packages/mlt/dist

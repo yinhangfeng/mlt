@@ -161,7 +161,7 @@ void mlt_multitrack_refresh( mlt_multitrack self )
  * \param self a multitrack
  */
 
-static void mlt_multitrack_listener( mlt_producer producer, mlt_multitrack self )
+static void mlt_multitrack_listener( mlt_producer producer, mlt_multitrack self, mlt_event_data event_data )
 {
 	mlt_multitrack_refresh( self );
 }

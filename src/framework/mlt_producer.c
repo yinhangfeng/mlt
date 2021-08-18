@@ -39,7 +39,7 @@
 
 static int producer_get_frame( mlt_service self, mlt_frame_ptr frame, int index );
 static void mlt_producer_property_changed(mlt_service owner, mlt_producer self, mlt_event_data );
-static void mlt_producer_service_changed( mlt_service owner, mlt_producer self );
+static void mlt_producer_service_changed( mlt_service owner, mlt_producer self, mlt_event_data );
 
 /* for debugging */
 //#define _MLT_PRODUCER_CHECKS_ 1
@@ -142,7 +142,7 @@ static void mlt_producer_property_changed( mlt_service owner, mlt_producer self,
  * \param self the producer
  */
 
-static void mlt_producer_service_changed( mlt_service owner, mlt_producer self )
+static void mlt_producer_service_changed( mlt_service owner, mlt_producer self, mlt_event_data event_data)
 {
 	mlt_events_fire( MLT_PRODUCER_PROPERTIES( mlt_producer_cut_parent( self ) ), "producer-changed", mlt_event_data_none() );
 }
