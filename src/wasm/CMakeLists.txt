@@ -1,4 +1,4 @@
-add_executable(wasm wasm.c)
+add_executable(melt wasm.c)
 
 target_compile_options(melt PRIVATE ${MLT_COMPILE_OPTIONS})
 

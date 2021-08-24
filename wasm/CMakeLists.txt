@@ -137,9 +137,8 @@ endif()
 
 add_subdirectory(framework)
 add_subdirectory(modules)
-add_subdirectory(melt)
-# TODO
-add_subdirectory(${SRC_DIR}/wasm)
+# add_subdirectory(melt)
+add_subdirectory(${SRC_DIR}/wasm ${CMAKE_BINARY_DIR}/wasm)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   # https://emscripten.org/docs/getting_started/FAQ.html?highlight=cmake#how-do-i-specify-s-options-in-a-cmake-project
