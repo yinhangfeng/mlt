@@ -70,36 +70,79 @@ class MLTInstance {
   }
 
   start() {
-    return this.melt.mlt_instance_start(this.nativeInstance);
-  }
+    this.melt._mlt_instance_start_with_init(this.nativeInstance);
 
-  stop() {
-    this.melt.mlt_instance_stop(this.nativeInstance);
-  }
-
-  release() {
-    this.melt.mlt_instance_release(this.nativeInstance);
-    this.nativeInstance = 0;
-  }
-
-  isStopped() {
-    return this.melt.mlt_instance_is_stopped(this.nativeInstance) !== 0;
-  }
-
-  getError() {
-    return this.melt.mlt_instance_get_error(this.nativeInstance);
-  }
-
-  waitForStop() {
-    return new Promise((resolve) => {
-      if (this.isStopped()) {
-        resolve();
+    return new Promise((resolve, reject) => {
+      if (!this.melt._mlt_instance_is_starting(this.nativeInstance)) {
+        const error = this.getError();
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
+        return;
       }
 
       const intervalId = setInterval(() => {
-        if (this.isStopped()) {
+        if (!this.melt._mlt_instance_is_starting(this.nativeInstance)) {
+          const error = this.getError();
+          if (error) {
+            reject(error);
+          } else {
+            resolve();
+          }
           clearInterval(intervalId);
+        }
+      }, 50);
+    });
+  }
+
+  stop() {
+    this.melt._mlt_instance_stop(this.nativeInstance);
+  }
+
+  release() {
+    this.melt._mlt_instance_release(this.nativeInstance);
+    this.nativeInstance = 0;
+  }
+
+  isRunning() {
+    return this.melt._mlt_instance_is_stopped(this.nativeInstance) === 0;
+  }
+
+  getProgress() {
+    return this.melt._mlt_instance_get_progress(this.nativeInstance);
+  }
+
+  getError() {
+    const errorCode = this.melt._mlt_instance_get_error(this.nativeInstance);
+    if (errorCode === 0) {
+      return null;
+    }
+    return new Error('error-' + errorCode);
+  }
+
+  waitRunning() {
+    return new Promise((resolve) => {
+      if (!this.isRunning()) {
+        const error = this.getError();
+        if (error) {
+          reject(error);
+        } else {
           resolve();
+        }
+        return;
+      }
+
+      const intervalId = setInterval(() => {
+        if (!this.isRunning()) {
+          clearInterval(intervalId);
+          const error = this.getError();
+          if (error) {
+            reject(error);
+          } else {
+            resolve();
+          }
         }
       }, 500);
     });
@@ -125,13 +168,15 @@ function getMelt() {
   }).then((mod) => {
     mod.MLTInstance = MLTInstance;
     MLTInstance.create = ({ args }) => {
-      mod.mlt_instance_create();
       const nativeArgs = parseArgs(mod, ['melt', ...args]);
-      const nativeInstance = mod.ccall('main', 'number', ['number', 'number'], nativeArgs);
+      const nativeInstance = mod.ccall(
+        'mlt_instance_create',
+        'number',
+        ['number', 'number'],
+        nativeArgs
+      );
 
-      console.log('nativeInstance', nativeInstance);
-      // 释放 argv
-      mod._free(nativeArgs[1]);
+      console.log('nativeInstance', nativeInstance); ///
 
       if (!nativeInstance) {
         return null;

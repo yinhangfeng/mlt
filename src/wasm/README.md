@@ -1,1 +1,1 @@
-wasm 对外暴露的 api
+wasm

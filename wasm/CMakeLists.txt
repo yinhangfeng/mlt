@@ -114,7 +114,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
 
   # -gsource-map -pthread 不能放在 target_link_options 中
   # https://emscripten.org/docs/porting/Debugging.html#debug-information
-  # --embed-file=${MLT_INSTALL_DATA_DIR}@/mlt_data
   set(EMSCRIPTEN_CFLAGS "-pthread -gsource-map")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${EMSCRIPTEN_CFLAGS}")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EMSCRIPTEN_CFLAGS}")
@@ -148,7 +147,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
     -sEXPORT_NAME=createMelt
     -sINVOKE_RUN=0 # 关闭默认运行 main() 函数
     # -sEXIT_RUNTIME=1
-    # -sEXPORTED_FUNCTIONS=[]  # 导出函数
+    -sEXPORTED_FUNCTIONS=[_main,_mlt_instance_create,_mlt_instance_start_with_init,_mlt_instance_stop,_mlt_instance_is_starting,_mlt_instance_is_running,_mlt_instance_is_stopped,_mlt_instance_get_progress,_mlt_instance_get_error,_mlt_instance_release]  # 导出函数
     -sEXPORTED_RUNTIME_METHODS=[FS,cwrap,ccall,setValue,writeAsciiToMemory]
     -sPROXY_TO_PTHREAD=1 # 在 worker 中运行 main 函数 https://github.com/emscripten-core/emscripten/blob/main/system/lib/pthread/emscripten_proxy_main.c
     -sPTHREAD_POOL_SIZE=4 # 初始线程池大小 navigator.hardwareConcurrency 表示根据机器cpu核心数
