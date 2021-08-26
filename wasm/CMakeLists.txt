@@ -9,6 +9,7 @@ project(MLT
 
 option(MOD_AVFORMAT "Enable avformat module" ON)
 option(MOD_XML "Enable XML module" ON)
+option(MOD_GDK "Enable GDK module" OFF)
 
 set(PROJECT_DIR ${CMAKE_SOURCE_DIR}/..)
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/../src)
@@ -127,10 +128,14 @@ if(MOD_AVFORMAT)
     MOD_AVFORMAT_ENABLED
   )
 endif()
-
 if(MOD_XML)
   add_compile_definitions(
     MOD_XML_ENABLED
+  )
+endif()
+if(MOD_GDK)
+  add_compile_definitions(
+    MOD_GDK_ENABLED
   )
 endif()
 

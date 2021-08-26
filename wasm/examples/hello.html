@@ -36,6 +36,7 @@
     <button onclick="test3()">output video</button>
     <button onclick="proxyMainGreyVideo()">proxy_main grey video</button>
     <button onclick="greyVideo()">grey video MLTInstance</button>
+    <button onclick="watermarkVideo()">watermark MLTInstance</button>
     <button onclick="palyVideo()">play video</button>
   </div>
   <input type="file" id="uploader">
@@ -137,6 +138,63 @@
 
       const instance = melt.MLTInstance.create({
         args: ['input.mp4', 'out=300', '-filter', 'greyscale', '-consumer', 'avformat:output.mp4'],
+      });
+
+      if (!instance) {
+        console.log('MLTInstance.create error');
+        return;
+      }
+      let intervalId;
+
+      try {
+        try {
+          await instance.start();
+        } catch (err) {
+          console.log('start error:', err);
+          return;
+        }
+
+        intervalId = setInterval(() => {
+          console.log('progress:', instance.getProgress());
+        }, 500);
+
+        try {
+          await instance.waitRunning();
+        } catch (err) {
+          console.log('run error:', err);
+          return;
+        }
+        clearInterval(intervalId);
+
+        console.log('MLTInstance finish error:', instance.getError());
+
+        const outputFile = FS.readFile('output.mp4');
+        console.log('outputFile:', outputFile);
+
+      } finally {
+        instance.release();
+        clearInterval(intervalId);
+      }
+    }
+
+    async function watermarkVideo() {
+      const files = document.getElementById('uploader').files;
+      if (!files || !files[0]) {
+        return;
+      }
+
+      const inputFileData = new Uint8Array(await readFromBlobOrFile(files[0]));
+
+      const imageData = new Uint8Array(await fetch('https://img.alicdn.com/imgextra/i1/O1CN01lRNxGB1d9tlgDo4gL_!!6000000003694-2-tps-953-272.png').then(res => res.arrayBuffer()));
+
+      const melt = await getMelt();
+      const FS = melt.FS;
+
+      FS.writeFile('input.mp4', inputFileData);
+      FS.writeFile('input.png', imageData);
+
+      const instance = melt.MLTInstance.create({
+        args: ['input.mp4', 'out=300', '-filter', 'watermark:input.png', 'composite.geometry=20%/20%:30%x30%:80%', '-consumer', 'avformat:output.mp4'],
       });
 
       if (!instance) {

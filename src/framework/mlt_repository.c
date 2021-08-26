@@ -38,6 +38,7 @@
 extern void mlt_core_register( mlt_repository repository );
 extern void mlt_avformat_register( mlt_repository repository );
 extern void mlt_xml_register( mlt_repository repository );
+extern void mlt_gdk_register( mlt_repository repository );
 #endif
 
 /** \brief Repository class
@@ -88,6 +89,9 @@ mlt_repository mlt_repository_init( const char *directory )
 #endif
 #if defined(MOD_XML_ENABLED)
 	mlt_xml_register(self);
+#endif
+#if defined(MOD_GDK_ENABLED)
+	mlt_gdk_register(self);
 #endif
 
 #else

@@ -95,3 +95,7 @@ MLT_REPOSITORY
 	MLT_REGISTER_METADATA( mlt_service_producer_type, "pango", metadata, "producer_pango.yml" );
 	MLT_REGISTER_METADATA( mlt_service_producer_type, "pixbuf", metadata, "producer_pixbuf.yml" );
 }
+
+void mlt_gdk_register( mlt_repository repository ) {
+	mlt_register(repository);
+}
